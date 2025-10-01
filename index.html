@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UC Opportunity Classifier</title>
+  <meta name="description" content="Paste a description and get a quick UC classification based on keywords." />
+  <style>
+    :root{
+      --bg:#0b1020; --panel:#121938; --muted:#8fa3ff; --text:#ecf0ff; --accent:#7aa2ff; --chip:#1a2350; --ok:#5ee38f; --warn:#ffd166;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; color:var(--text); background:radial-gradient(1000px 600px at 10% 0%, #16204a 0, #0b1020 60%);}    
+    header{position:sticky; top:0; backdrop-filter: blur(6px); background:linear-gradient( to bottom, rgba(11,16,32,.85), rgba(11,16,32,.35)); border-bottom:1px solid rgba(255,255,255,.06);}
+    .wrap{max-width:1100px; margin:0 auto; padding:20px;}
+    h1{margin:6px 0 2px; font-size:clamp(22px, 4vw, 32px)}
+    .sub{color:var(--muted); margin:0 0 10px; font-size:14px}
+    main{display:grid; gap:18px; grid-template-columns:1.2fr .8fr; align-items:start; padding:16px 20px 40px}
+    @media (max-width: 960px){ main{grid-template-columns:1fr} }
+    .card{background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,.35)}
+    .card h2{margin:0 0 8px; font-size:18px}
+    .card .body{padding:16px}
+    label{display:block; font-weight:600; margin:0 0 6px}
+    textarea{width:100%; min-height:210px; resize:vertical; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#0f1533; color:var(--text)}
+    .controls{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px}
+    button, .ghost{cursor:pointer; border:1px solid rgba(255,255,255,.14); background:#0e1530; color:var(--text); padding:10px 14px; border-radius:12px; font-weight:600}
+    button.primary{background:linear-gradient(135deg, #597bff, #7aa2ff); border:none; color:#091028}
+    button:disabled{opacity:.6; cursor:not-allowed}
+    input[type="text"]{width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.12); background:#0f1533; color:var(--text)}
+    .row{display:grid; gap:10px; grid-template-columns:1fr 140px}
+    .chips{display:flex; flex-wrap:wrap; gap:8px}
+    .chip{background:var(--chip); border:1px solid rgba(255,255,255,.1); padding:6px 10px; border-radius:999px; font-size:12px}
+    .stat{display:grid; grid-template-columns:1fr auto; gap:8px; padding:10px 12px; background:#0f1533; border:1px dashed rgba(255,255,255,.12); border-radius:12px}
+    .grid{display:grid; gap:10px}
+    .result{white-space:pre-wrap; background:#0e1530; border-radius:12px; padding:12px; border:1px solid rgba(255,255,255,.12)}
+    .muted{color:#a8b3ff}
+    .score{font-weight:700}
+    .badge{padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid rgba(255,255,255,.18)}
+    .ok{background:rgba(94,227,143,.12); color:#a5ffcb; border-color:rgba(94,227,143,.35)}
+    .warn{background:rgba(255,209,102,.12); color:#ffe9b2; border-color:rgba(255,209,102,.35)}
+    details{border:1px solid rgba(255,255,255,.14); border-radius:12px}
+    summary{cursor:pointer; padding:10px 12px; font-weight:600}
+    details .body{border-top:1px solid rgba(255,255,255,.08)}
+    footer{opacity:.8; padding:20px; text-align:center; color:var(--muted)}
+    .small{font-size:12px}
+    code{background:#0f1533; padding:2px 6px; border-radius:8px; border:1px solid rgba(255,255,255,.08)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>UC Opportunity Classifier</h1>
+      <p class="sub">Paste a description and get a quick, keyword‑based classification of Unified Communications products & services.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- LEFT: Input -->
+    <section class="card">
+      <div class="body">
+        <h2>Tell Me about the Opportunity</h2>
+        <label for="inputText" class="muted">Paste customer notes, RFP text, or a freeform description.</label>
+        <textarea id="inputText" placeholder="Example: We're migrating from CUCM to Teams Phone with AudioCodes SBC, need Webex Room systems in 6 rooms, Cisco Desk phones for execs, SIP trunks from Lumen, and a small UCCX to Webex CC migration..."></textarea>
+        <div class="controls">
+          <button id="analyzeBtn" class="primary">Analyze</button>
+          <button id="clearBtn" class="ghost">Clear</button>
+          <button id="copyBtn" class="ghost">Copy Result</button>
+          <button id="downloadBtn" class="ghost">Download JSON</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Output -->
+    <section class="card">
+      <div class="body">
+        <h2>Classification</h2>
+        <div class="grid">
+          <div class="stat"><div>Top Category</div><div id="topCategory" class="badge warn">—</div></div>
+          <div class="stat"><div>Confidence</div><div id="confidence" class="badge warn">—</div></div>
+          <div>
+            <label class="muted">Matched Keywords</label>
+            <div id="matched" class="chips"></div>
+          </div>
+          <div>
+            <label class="muted">Summary</label>
+            <div id="summary" class="result">Run an analysis to see results.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FULL-WIDTH: Details & How-To -->
+    <section class="card" style="grid-column:1/-1">
+      <details>
+        <summary>Keyword Taxonomy (editable)</summary>
+        <div class="body">
+          <p class="small">You can edit the taxonomy below directly in code. Each category contains weighted keyword arrays. Synonyms/brands help boost a category.
+          </p>
+          <pre class="result" id="taxonomyPreview" style="max-height:260px; overflow:auto"></pre>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap small">Tip: Commit this file to a GitHub repo and enable <strong>GitHub Pages</strong> (Settings → Pages) to host it. No build step needed.</div>
+  </footer>
+
+  <script>
+    // ... JS content with updated TAXONOMY (from the latest version) ...
+  </script>
+</body>
+</html>
